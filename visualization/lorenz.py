@@ -39,15 +39,25 @@ class Lorenz(ThreeDScene):
         colors = [ManimColor("#39FF14"), ManimColor("#00FEFC"), ManimColor("#FFFF00")]
 
         curves = VGroup()
+        dots = []
 
         for state0, color in zip(states0, colors):
             points = integrate_lorenz(lorenz_equation, state0, evolution_time)
 
             curve = VMobject()
             curve.set_points_smoothly(axes.coords_to_point(points))
-            curve.set_stroke(color=color, width=1)
+            curve.set_stroke(color=color, width=2)
 
             curves.add(curve)
+
+            dot = AnnotationDot(
+                radius=3,
+                fill_color=DARKER_GRAY,
+                fill_opacity=1,
+                stroke_width=1,
+                stroke_color=color,
+            )
+            dot.add_updater(lambda m, t: m.move_to(curve.points[-1]))
 
         self.play(
             *(Create(curve) for curve in curves),
