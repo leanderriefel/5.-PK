@@ -1,2 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/5. PK/visualization/media/videos/lorenz/480p15/partial_movie_files/Lorenz/4081762894_2764471635_3436087012.mp4'

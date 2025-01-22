@@ -30,16 +30,16 @@ class Lorenz(ThreeDScene):
         # add ambient camera rotation
         self.begin_ambient_camera_rotation(rate=0.2)
 
-        evolution_time = 100
+        evolution_time = 10
 
-        episilon = 1e-5
+        episilon = 1e-1
         n_states = 3
 
         states0 = (np.array([10.0, 10.0, 10.0 + i * episilon]) for i in range(n_states))
         colors = [ManimColor("#39FF14"), ManimColor("#00FEFC"), ManimColor("#FFFF00")]
 
         curves = VGroup()
-        dots = []
+        dots = Group()
 
         for state0, color in zip(states0, colors):
             points = integrate_lorenz(lorenz_equation, state0, evolution_time)
@@ -50,14 +50,17 @@ class Lorenz(ThreeDScene):
 
             curves.add(curve)
 
-            dot = AnnotationDot(
-                radius=3,
-                fill_color=DARKER_GRAY,
+        for curve, color in zip(curves, colors):
+            dot = Dot(
+                radius=0.05,
+                color=DARKER_GRAY,
                 fill_opacity=1,
-                stroke_width=1,
-                stroke_color=color,
             )
-            dot.add_updater(lambda m, t: m.move_to(curve.points[-1]))
+            dot.stroke_color = color
+            dot.stroke_width = 2
+            dot.add_updater(lambda m: m.move_to(curve.get_end()))
+
+            self.add_fixed_orientation_mobjects(dot)
 
         self.play(
             *(Create(curve) for curve in curves),
