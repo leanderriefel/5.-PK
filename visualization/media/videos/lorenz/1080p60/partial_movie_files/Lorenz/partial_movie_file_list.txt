@@ -1,2 +1,3 @@
-# This file is used internally by FFMPEG.
-file 'file:D:/5. PK/visualization/media/videos/lorenz/1080p60/partial_movie_files/Lorenz/1154839192_2858898449_2438064273.mp4'
+version https://git-lfs.github.com/spec/v1
+oid sha256:cf115df1d92e8d5adce70487b0a2c0f438c94c955d06025ffe54205c0edf9239
+size 168
