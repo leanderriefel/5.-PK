@@ -1,3 +1,2 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:651717772dfd85e7436110550aa30aac274e4b2ef202f7ef6a6a3c521d8e9bf1
-size 151
+# This file is used internally by FFMPEG.
+file 'file:D:/5. PK/visualization/media/videos/lorenz/1080p30/partial_movie_files/Lorenz/uncached_00000.mp4'
