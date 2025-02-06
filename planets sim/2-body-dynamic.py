@@ -26,8 +26,8 @@ history = [state.copy()]
 fig, ax = plt.subplots(figsize=(10, 10), dpi=100)
 plt.subplots_adjust(bottom=0.1)
 
-fig.set_facecolor("#efefff")
-ax.set_facecolor("#efefff")
+fig.set_facecolor("#white")
+ax.set_facecolor("#white")
 ax.spines[["bottom", "left", "top", "right"]].set_color("black")
 ax.tick_params(axis="x", colors="black")
 ax.tick_params(axis="y", colors="black")
@@ -95,7 +95,7 @@ def reset(event):
 
 # Create and configure reset button
 ax_reset = plt.axes([0.85, 0.05, 0.1, 0.05])
-reset_button = Button(ax_reset, "Reset", color="#efefff", hovercolor="#dfdfef")
+reset_button = Button(ax_reset, "Reset", color="white", hovercolor="#efefef")
 reset_button.label.set_color("black")
 reset_button.on_clicked(reset)
 
