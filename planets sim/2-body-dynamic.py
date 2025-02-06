@@ -26,8 +26,8 @@ history = [state.copy()]
 fig, ax = plt.subplots(figsize=(10, 10), dpi=100)
 plt.subplots_adjust(bottom=0.1)
 
-fig.set_facecolor("#white")
-ax.set_facecolor("#white")
+fig.set_facecolor("white")
+ax.set_facecolor("white")
 ax.spines[["bottom", "left", "top", "right"]].set_color("black")
 ax.tick_params(axis="x", colors="black")
 ax.tick_params(axis="y", colors="black")
