@@ -3,7 +3,7 @@
 
 #### Themen:
 - ##### Planetenbahnen
-- Tot der Sonne (eher nicht )
+- Tot der Sonne (nebensächlich)
 
 
 21. Februar, 13:45 Uhr

@@ -3,11 +3,10 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button
 
-# Configure matplotlib to display without toolbar
 plt.rcParams["toolbar"] = "None"
 
 # Physical constants and simulation parameters
-G = 10  # Universal gravitational constant (simulation units)
+G = 10  # Universal gravitational constant
 m1 = 1  # Mass of Planet 1
 m2 = 1000000  # Mass of Planet 2
 
