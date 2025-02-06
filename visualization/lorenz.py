@@ -2,6 +2,7 @@ from manim import *
 from scipy.integrate import solve_ivp
 
 
+# Lorenz Attractor
 def lorenz_equation(t, state, sigma=10, rho=28, beta=8 / 3):
     x, y, z = state
     dxdt = sigma * (y - x)
@@ -10,6 +11,8 @@ def lorenz_equation(t, state, sigma=10, rho=28, beta=8 / 3):
     return np.array([dxdt, dydt, dzdt])
 
 
+# Integrate usign explicit Runge-Kutta method of order (4)5 - default for solve_ivp from scipy
+# TODO: Probably will do it manually in the future
 def integrate_lorenz(function, state0, time, dt=0.01):
     solution = solve_ivp(
         function, t_span=(0, time), y0=state0, t_eval=np.arange(0, time, dt)
@@ -17,6 +20,7 @@ def integrate_lorenz(function, state0, time, dt=0.01):
     return solution.y.T
 
 
+# 3D Plot
 class Lorenz(ThreeDScene):
     def construct(self):
         axes = ThreeDAxes(

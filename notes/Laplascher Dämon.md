@@ -1,0 +1,3 @@
+We must consider the present state of the universe as the effect of its previous state, and as the cause for what will follow. An intelligence which, at a given moment, would know all the forces by which nature is animated and the position of every object in the universe if indeed it was powerful enough to submit these data to analysis, would embrace in a single formula the movements of the greatest bodies of the universe and those of the lightest atom: nothing would be uncertain for it, and the future as the past, would appear before its eyes.
+
+https://www.chaos-math.org/en/chaos-i-motion-and-determinism.html
