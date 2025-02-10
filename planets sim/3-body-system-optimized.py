@@ -2,19 +2,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button
+import numba as nb
+from scipy.integrate import dop853
 
 plt.rcParams["toolbar"] = "None"
 
 MAX_HISTORY = 10000  # Maximum number of points to keep in history
 
-# Physical constants and simulation parameters
+# Physical constants and simulation parameters see https://arxiv.org/pdf/1705.00527 II.Ci.c. 246 (page 37 / 61)
 G = 1  # Universal gravitational constant
-m1 = 10000  # Mass of Planet 1
-m2 = 10000  # Mass of Planet 2
-m3 = 10000  # Mass of Planet 3
+m1 = 1  # Mass of Planet 1
+m2 = 1  # Mass of Planet 2
+m3 = 1  # Mass of Planet 3
+v1 = 0.4127173212
+v2 = 0.4811313628
 
 # Initial conditions: [x1, y1, vx1, vy1, x2, y2, vx2, vy2, x3, y3, vx3, vy3]
-state = np.array([-5, 10, 0, 0, 12, -7, 0, 0, -7, -3, 0, 0])
+state = np.array([
+    -1, 0, v1, v2,
+    1, 0, v1, v2,
+    0, 0, -2*v1, -2*v2
+])
 history = [state.copy()]
 
 # Set up the plotting window
@@ -27,26 +35,21 @@ ax.spines[["bottom", "left", "top", "right"]].set_color("black")
 ax.tick_params(axis="x", colors="black")
 ax.tick_params(axis="y", colors="black")
 
-ax.set_xlim(-20, 20)
-ax.set_ylim(-20, 20)
+ax.set_xlim(-2, 2)
+ax.set_ylim(-2, 2)
 ax.grid(color="black", linewidth=0.2, alpha=0.4)
 ax.set_box_aspect(1)
 
-planet1 = ax.plot(
-    [], [], "o", color="#00aaaa", markersize=10, label="Planet 1", alpha=0.8
-)[0]
-planet2 = ax.plot(
-    [], [], "o", color="#aa00aa", markersize=10, label="Planet 2", alpha=0.8
-)[0]
-planet3 = ax.plot(
-    [], [], "o", color="#aaaa00", markersize=10, label="Planet 3", alpha=0.8
-)[0]
+planet1 = ax.plot([], [], "o", color="#00aaaa", markersize=10, label="Planet 1", alpha=0.8)[0]
+planet2 = ax.plot([], [], "o", color="#aa00aa", markersize=10, label="Planet 2", alpha=0.8)[0]
+planet3 = ax.plot([], [], "o", color="#aaaa00", markersize=10, label="Planet 3", alpha=0.8)[0]
 
 trail1 = ax.plot([], [], "-", color="#00aaaa", alpha=0.3, linewidth=1)[0]
 trail2 = ax.plot([], [], "-", color="#aa00aa", alpha=0.3, linewidth=1)[0]
 trail3 = ax.plot([], [], "-", color="#aaaa00", alpha=0.3, linewidth=1)[0]
 
 
+@nb.njit()
 def acceleration(state):
     # Unpack state for planets
     x1, y1, vx1, vy1, x2, y2, vx2, vy2, x3, y3, vx3, vy3 = state
@@ -57,25 +60,29 @@ def acceleration(state):
     r23 = np.array([x3 - x2, y3 - y2])
 
     # Calculate distances
-    r12_mag = np.linalg.norm(r12)
-    r13_mag = np.linalg.norm(r13)
-    r23_mag = np.linalg.norm(r23)
+    r12_mag = np.sqrt(r12[0] ** 2 + r12[1] ** 2)
+    r13_mag = np.sqrt(r13[0] ** 2 + r13[1] ** 2)
+    r23_mag = np.sqrt(r23[0] ** 2 + r23[1] ** 2)
 
     # Calculate gravitational accelerations
     a1 = G * (m2 * r12 / r12_mag**3 + m3 * r13 / r13_mag**3)
     a2 = G * (m1 * (-r12) / r12_mag**3 + m3 * r23 / r23_mag**3)
     a3 = G * (m1 * (-r13) / r13_mag**3 + m2 * (-r23) / r23_mag**3)
 
-    return np.array(
-        [vx1, vy1, a1[0], a1[1], vx2, vy2, a2[0], a2[1], vx3, vy3, a3[0], a3[1]]
-    )
+    return np.array([
+        vx1, vy1, a1[0], a1[1],
+        vx2, vy2, a2[0], a2[1],
+        vx3, vy3, a3[0], a3[1]
+    ])
 
 
+@nb.njit()
 def euler(state, dt=0.01):
     return state + acceleration(state) * dt
 
 
-def rk4(state, dt=0.001):
+@nb.njit()
+def rk4(state, dt=0.0001):
     k1 = acceleration(state)
     k2 = acceleration(state + dt * k1 / 2)
     k3 = acceleration(state + dt * k2 / 2)

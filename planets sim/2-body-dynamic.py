@@ -99,5 +99,5 @@ reset_button.label.set_color("black")
 reset_button.on_clicked(reset)
 
 # Start animation
-ani = FuncAnimation(fig, update, interval=20, cache_frame_data=False)
+ani = FuncAnimation(fig, update, interval=10, cache_frame_data=False)
 plt.show()
