@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button
 import numba as nb
-from scipy.integrate import dop853
 
 plt.rcParams["toolbar"] = "None"
 
@@ -89,13 +88,50 @@ def rk4(state, dt=0.0001):
     k4 = acceleration(state + dt * k3)
     return state + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
 
+@nb.njit()
+def rkdp45(state, dt=0.001):
+    # Dormand–Prince coefficients
+    # c-values (time fraction):
+    c2, c3, c4, c5, c6, c7 = 1/5, 3/10, 4/5, 8/9, 1.0, 1.0
+
+    # Butcher tableau:
+    a21 = 1/5
+    a31, a32 = 3/40, 9/40
+    a41, a42, a43 = 44/45, -56/15, 32/9
+    a51, a52, a53, a54 = 19372/6561, -25360/2187, 64448/6561, -212/729
+    a61, a62, a63, a64, a65 = 9017/3168, -355/33, 46732/5247, 49/176, -5103/18656
+    a71, a72, a73, a74, a75, a76 = 35/384, 0.0, 500/1113, 125/192, -2187/6784, 11/84
+
+    # Coefficients for 5th-order solution
+    b1, b2, b3, b4, b5, b6 = 35/384, 0.0, 500/1113, 125/192, -2187/6784, 11/84
+    # b7 = 0.0 implicit for the 5th order
+
+    # Coefficients for 4th-order *embedded* solution
+    # Used for error estimate
+    b1s, b2s, b3s, b4s, b5s, b6s, b7s = 5179/57600, 0.0, 7571/16695, 393/640, -92097/339200, 187/2100, 1/40
+
+    k1 = acceleration(state)
+    k2 = acceleration(state + dt*(a21*k1))
+    k3 = acceleration(state + dt*(a31*k1 + a32*k2))
+    k4 = acceleration(state + dt*(a41*k1 + a42*k2 + a43*k3))
+    k5 = acceleration(state + dt*(a51*k1 + a52*k2 + a53*k3 + a54*k4))
+    k6 = acceleration(state + dt*(a61*k1 + a62*k2 + a63*k3 + a64*k4 + a65*k5))
+    k7 = acceleration(state + dt*(a71*k1 + a72*k2 + a73*k3 + a74*k4 + a75*k5 + a76*k6))
+
+    # 5th-order solution
+    y5 = state + dt*(b1*k1 + b2*k2 + b3*k3 + b4*k4 + b5*k5 + b6*k6)
+    # 4th-order solution (embedded) might be used for error estimate later
+    y4 = state + dt*(b1s*k1 + b2s*k2 + b3s*k3 + b4s*k4 + b5s*k5 + b6s*k6 + b7s*k7)
+
+    return y5
+
 
 def update(frame):
     # Update the state of the system
     global history
-    history.append(rk4(history[-1]))
-    if len(history) > MAX_HISTORY:
-        history.pop(0)
+    history.append(rkdp45(history[-1]))
+    # if len(history) > MAX_HISTORY:
+    #     history.pop(0)
     points = np.array(history)
 
     # Update the positions of the planets and their trails
