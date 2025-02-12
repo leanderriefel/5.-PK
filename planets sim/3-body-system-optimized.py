@@ -89,7 +89,7 @@ def rk4(state, dt=0.0001):
     return state + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
 
 @nb.njit()
-def rkdp45(state, dt=0.001):
+def rkdp45(state, dt=0.01):
     # Dormand–Prince coefficients
     # c-values (time fraction):
     c2, c3, c4, c5, c6, c7 = 1/5, 3/10, 4/5, 8/9, 1.0, 1.0
