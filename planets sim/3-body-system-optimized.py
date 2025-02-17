@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button
 import numba as nb
-from scipy.integrate import dop853
 
 plt.rcParams["toolbar"] = "None"
 
