@@ -5,7 +5,10 @@ from matplotlib.widgets import Button
 import numba as nb
 import json
 
-G = 6.6743e-11  # Gravitational constant
+G = 1  # Gravitational constant
+
+"""-------------------------------------------------------------------------"""
+G = 6.6743e-11
 AU_to_m = 1.496e11  # Astronomical unit to meters
 AUday_to_ms = AU_to_m / 86400  # AU/day to m/s
 
@@ -40,6 +43,7 @@ bodies = np.array(rows, dtype=np.float64)
 
 bodies[:, 1:4] *= AU_to_m
 bodies[:, 4:7] *= AUday_to_ms
+"""-------------------------------------------------------------------------"""
 
 history = [[bodies[i, 1:4].copy()] for i in range(bodies.shape[0])]
 
@@ -48,9 +52,9 @@ fig = plt.figure(figsize=(10, 10), dpi=100)
 ax = fig.add_subplot(111, projection="3d")
 plt.subplots_adjust(bottom=0.1)
 
-ax.set_xlim(-2e12, 2e12)
-ax.set_ylim(-2e12, 2e12)
-ax.set_zlim(-2e12, 2e12)
+ax.set_xlim(-3e12, 3e12)
+ax.set_ylim(-3e12, 3e12)
+ax.set_zlim(-3e12, 3e12)
 
 ax.set_box_aspect((1, 1, 1))
 
