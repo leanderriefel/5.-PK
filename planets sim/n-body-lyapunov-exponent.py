@@ -4,6 +4,7 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button
 import numba as nb
 import json
+import keyboard
 
 G = 1  # Gravitational constant
 
@@ -45,29 +46,10 @@ bodies[:, 1:4] *= AU_to_m
 bodies[:, 4:7] *= AUday_to_ms
 """-------------------------------------------------------------------------"""
 
-history = [[bodies[i, 1:4].copy()] for i in range(bodies.shape[0])]
+delta0 = 1e-10
 
-# Set up 3D plot
-fig = plt.figure(figsize=(10, 10), dpi=100)
-ax = fig.add_subplot(111, projection="3d")
-plt.subplots_adjust(bottom=0.1)
-
-ax.set_xlim(-3e12, 3e12)
-ax.set_ylim(-3e12, 3e12)
-ax.set_zlim(-3e12, 3e12)
-
-ax.set_box_aspect((1, 1, 1))
-
-planets = [
-    ax.plot(
-        [], [], [], "o", color=f"C{i}", markersize=10, label=f"Planet {i+1}", alpha=0.8
-    )[0]
-    for i in range(bodies.shape[0])
-]
-trails = [
-    ax.plot([], [], [], "-", color=f"C{i}", alpha=0.3, linewidth=1)[0]
-    for i in range(bodies.shape[0])
-]
+history = [[bodies[i].copy()] for i in range(bodies.shape[0])]
+history_delta = [[bodies[i].copy() + delta0] for i in range(bodies.shape[0])]
 
 
 @nb.njit()
@@ -154,9 +136,9 @@ def rkdp45(bodies, dt=10000):
 
     error = np.linalg.norm(y5 - y4)
     print("dt:", dt, "error:", error)
-    if error > 1e-1:
-      dt = 0.99 * dt * (1e-1 / error) ** 0.01
-      return rkdp45(bodies, dt)
+    if error > 1e-10:
+        dt = 0.9 * dt * (1e-10 / error) ** 0.2
+        return rkdp45(bodies, dt)
     return y5
 
 
@@ -166,21 +148,35 @@ def euler(bodies, dt=10000):
     return bodies + dt * acc
 
 
-def update(frame):
-    global bodies, history
-    bodies = euler(bodies)
-    for i in range(bodies.shape[0]):
-        history[i].append(bodies[i, 1:4].copy())
-        # Update planet position: set x and y data, then z.
-        planets[i].set_data(np.array([bodies[i, 1]]), np.array([bodies[i, 2]]))
-        planets[i].set_3d_properties(np.array([bodies[i, 3]]))
-        # Update trail data:
-        trail_x = [pos[0] for pos in history[i]]
-        trail_y = [pos[1] for pos in history[i]]
-        trail_z = [pos[2] for pos in history[i]]
-        trails[i].set_data(np.array(trail_x), np.array(trail_y))
-        trails[i].set_3d_properties(np.array(trail_z))
+def calc():
+    global bodies, history, history_delta
+    h = history[-1]
+    points = rkdp45(h)
+    for i in range(points):
+        history[i].append(points[i].copy())
+
+    h_delta = history_delta[-1]
+    points_delta = rkdp45(h_delta)
+    for i in range(points_delta):
+        history_delta[i].append(points_delta[i]())
 
 
-ani = FuncAnimation(fig, update, interval=10, cache_frame_data=False)
-plt.show()
+running = True
+
+while True:
+    if keyboard.is_pressed("q"):
+        n = len(history)
+        print(f"Calculation Lypunov Exponent for n = {n}")
+        deltas = [
+            np.linalg.norm(history[i]) - np.linalg.norm(history_delta[i])
+            for i in range(0, n)
+        ]
+        growths = [deltas[i] / delta0 for i in range(0, n)]
+        exponent = (1 / n) * np.sum(np.log(g) for g in growths)
+        print(f"Lypunov Exponent is approximately {exponent}")
+        break
+    elif keyboard.is_pressed("p"):
+        print("Paused")
+        running = not running
+    if running:
+        calc()
