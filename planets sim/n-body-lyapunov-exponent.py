@@ -173,6 +173,7 @@ while True:
         ]
         growths = [deltas[i] / delta0 for i in range(0, n)]
         exponent = (1 / n) * np.sum(np.log(g) for g in growths)
+        print(f"Lypunov Exponent is approximately {exponent}")
         break
     elif keyboard.is_pressed("p"):
         print("Paused")
