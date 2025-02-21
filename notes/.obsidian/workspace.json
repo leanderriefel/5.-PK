@@ -22,18 +22,6 @@
             }
           },
           {
-            "id": "e3a61c7c795d2b40",
-            "type": "leaf",
-            "state": {
-              "type": "release-notes",
-              "state": {
-                "currentVersion": "1.8.4"
-              },
-              "icon": "lucide-book-up",
-              "title": "Release Notes 1.8.4"
-            }
-          },
-          {
             "id": "cf19d20426c94d61",
             "type": "leaf",
             "state": {
@@ -47,8 +35,7 @@
               "title": "Quellen"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -67,8 +54,7 @@
             "state": {
               "type": "file-explorer",
               "state": {
-                "sortOrder": "alphabetical",
-                "autoReveal": false
+                "sortOrder": "alphabetical"
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -190,14 +176,14 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "cf19d20426c94d61",
+  "active": "ab8eded82fba01bc",
   "lastOpenFiles": [
+    "Quellen.md",
     "Ablauf.md",
     "Laplascher Dämon.md",
     "Lorenz System.md",
     "Lorenz v2.mp4",
     "Seltsamer Attraktor.md",
-    "Quellen.md",
     "Laplacescher Dämon.md",
     "Lorenz v2 1.mp4",
     "Seltsame.md"

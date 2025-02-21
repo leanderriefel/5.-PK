@@ -168,7 +168,7 @@ def euler(bodies, dt=10000):
 
 def update(frame):
     global bodies, history
-    bodies = rkdp45(bodies)
+    bodies = euler(bodies)
     for i in range(bodies.shape[0]):
         history[i].append(bodies[i, 1:4].copy())
         # Update planet position: set x and y data, then z.
@@ -181,21 +181,6 @@ def update(frame):
         trails[i].set_data(np.array(trail_x), np.array(trail_y))
         trails[i].set_3d_properties(np.array(trail_z))
 
-
-def reset(event):
-    global history
-    history = [[bodies[i, 1:4].copy()] for i in range(bodies.shape[0])]
-    for p in planets:
-        p.set_data([], [])
-        p.set_3d_properties([])
-    for t in trails:
-        t.set_data([], [])
-        t.set_3d_properties([])
-    plt.draw()
-
-
-reset_button = Button(plt.axes([0.8, 0.025, 0.1, 0.04]), "Reset")
-reset_button.on_clicked(reset)
 
 ani = FuncAnimation(fig, update, interval=10, cache_frame_data=False)
 plt.show()
