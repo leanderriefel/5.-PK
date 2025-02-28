@@ -168,7 +168,7 @@ def euler(bodies, dt=10000):
 
 def update(frame):
     global bodies, history
-    bodies = euler(bodies)
+    bodies = rkdp45(bodies)
     for i in range(bodies.shape[0]):
         history[i].append(bodies[i, 1:4].copy())
         # Update planet position: set x and y data, then z.
