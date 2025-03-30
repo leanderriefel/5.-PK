@@ -4,7 +4,7 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button
 import numba as nb
 from numba import cuda
-from math import sqrt
+from math import sqrt  # Add this import for CUDA-compatible sqrt
 
 plt.rcParams["toolbar"] = "None"
 
@@ -36,8 +36,8 @@ ax.spines[["bottom", "left", "top", "right"]].set_color("black")
 ax.tick_params(axis="x", colors="black")
 ax.tick_params(axis="y", colors="black")
 
-ax.set_xlim(-2, 2)
-ax.set_ylim(-2, 2)
+ax.set_xlim(-5, 5)
+ax.set_ylim(-5, 5)
 ax.grid(color="black", linewidth=0.2, alpha=0.4)
 ax.set_box_aspect(1)
 
@@ -52,7 +52,7 @@ trail3 = ax.plot([], [], "-", color="#aaaa00", alpha=0.3, linewidth=1)[0]
 
 @cuda.jit
 def acceleration_kernel(state, result):
-    # CUDA kernel for calculating accelerations
+    """CUDA kernel for calculating accelerations"""
     # Calculate accelerations for all bodies in parallel
     x1, y1 = state[0], state[1]
     x2, y2 = state[4], state[5]
@@ -63,7 +63,7 @@ def acceleration_kernel(state, result):
     r13x, r13y = x3 - x1, y3 - y1
     r23x, r23y = x3 - x2, y3 - y2
     
-    # Calculate distances
+    # Calculate distances using CUDA-compatible sqrt
     r12_mag = sqrt(r12x**2 + r12y**2)
     r13_mag = sqrt(r13x**2 + r13y**2)
     r23_mag = sqrt(r23x**2 + r23y**2)
@@ -74,7 +74,7 @@ def acceleration_kernel(state, result):
     r23_cube = r23_mag**3
     
     # Planet 1 accelerations
-    result[2] = 1.0 * (1.0 * r12x/r12_cube + 1.0 * r13x/r13_cube)
+    result[2] = 1.0 * (1.0 * r12x/r12_cube + 1.0 * r13x/r13_cube)  # Using constants directly
     result[3] = 1.0 * (1.0 * r12y/r12_cube + 1.0 * r13y/r13_cube)
     
     # Planet 2 accelerations
@@ -94,16 +94,18 @@ def acceleration_kernel(state, result):
     result[9] = state[11]
 
 def acceleration(state):
-    # Wrapper function to call CUDA kernel
+    """Wrapper function to call CUDA kernel"""
     d_state = cuda.to_device(state)
     d_result = cuda.device_array_like(state)
     acceleration_kernel[1, 1](d_state, d_result)
     return d_result.copy_to_host()
 
 def euler(state, dt=0.01):
+    """Euler integration using CUDA-accelerated acceleration calculation"""
     return state + acceleration(state) * dt
 
 def rk4(state, dt=0.0001):
+    """RK4 integration using CUDA-accelerated acceleration calculation"""
     k1 = acceleration(state)
     k2 = acceleration(state + dt * k1 / 2)
     k3 = acceleration(state + dt * k2 / 2)
