@@ -35,15 +35,9 @@ ax.set_ylim(-2, 2)
 ax.grid(color="black", linewidth=0.2, alpha=0.4)
 ax.set_box_aspect(1)
 
-planet1 = ax.plot(
-    [], [], "o", color="#00aaaa", markersize=10, label="Planet 1", alpha=0.8
-)[0]
-planet2 = ax.plot(
-    [], [], "o", color="#aa00aa", markersize=10, label="Planet 2", alpha=0.8
-)[0]
-planet3 = ax.plot(
-    [], [], "o", color="#aaaa00", markersize=10, label="Planet 3", alpha=0.8
-)[0]
+planet1 = ax.plot([], [], "o", color="#00aaaa", markersize=10, label="Planet 1", alpha=0.8)[0]
+planet2 = ax.plot([], [], "o", color="#aa00aa", markersize=10, label="Planet 2", alpha=0.8)[0]
+planet3 = ax.plot([], [], "o", color="#aaaa00", markersize=10, label="Planet 3", alpha=0.8)[0]
 
 trail1 = ax.plot([], [], "-", color="#00aaaa", alpha=0.3, linewidth=1)[0]
 trail2 = ax.plot([], [], "-", color="#aa00aa", alpha=0.3, linewidth=1)[0]
@@ -70,9 +64,7 @@ def acceleration(state):
     a2 = G * (m1 * (-r12) / r12_mag**3 + m3 * r23 / r23_mag**3)
     a3 = G * (m1 * (-r13) / r13_mag**3 + m2 * (-r23) / r23_mag**3)
 
-    return np.array(
-        [vx1, vy1, a1[0], a1[1], vx2, vy2, a2[0], a2[1], vx3, vy3, a3[0], a3[1]]
-    )
+    return np.array([vx1, vy1, a1[0], a1[1], vx2, vy2, a2[0], a2[1], vx3, vy3, a3[0], a3[1]])
 
 
 @nb.njit()
@@ -137,19 +129,13 @@ def rkdp45(state, dt=0.01):
     k3 = acceleration(state + dt * (a31 * k1 + a32 * k2))
     k4 = acceleration(state + dt * (a41 * k1 + a42 * k2 + a43 * k3))
     k5 = acceleration(state + dt * (a51 * k1 + a52 * k2 + a53 * k3 + a54 * k4))
-    k6 = acceleration(
-        state + dt * (a61 * k1 + a62 * k2 + a63 * k3 + a64 * k4 + a65 * k5)
-    )
-    k7 = acceleration(
-        state + dt * (a71 * k1 + a72 * k2 + a73 * k3 + a74 * k4 + a75 * k5 + a76 * k6)
-    )
+    k6 = acceleration(state + dt * (a61 * k1 + a62 * k2 + a63 * k3 + a64 * k4 + a65 * k5))
+    k7 = acceleration(state + dt * (a71 * k1 + a72 * k2 + a73 * k3 + a74 * k4 + a75 * k5 + a76 * k6))
 
     # 5th-order solution
     y5 = state + dt * (b1 * k1 + b2 * k2 + b3 * k3 + b4 * k4 + b5 * k5 + b6 * k6)
     # 4th-order solution (embedded) might be used for error estimate later
-    y4 = state + dt * (
-        b1s * k1 + b2s * k2 + b3s * k3 + b4s * k4 + b5s * k5 + b6s * k6 + b7s * k7
-    )
+    y4 = state + dt * (b1s * k1 + b2s * k2 + b3s * k3 + b4s * k4 + b5s * k5 + b6s * k6 + b7s * k7)
 
     error = np.linalg.norm(y5 - y4)
     print("dt:", dt, "error:", error)

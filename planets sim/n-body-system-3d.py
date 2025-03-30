@@ -9,12 +9,10 @@ import json
 G = 6.6743e-11
 AU_to_m = 1.496e11  # Astronomische Einheit in Meter
 AUday_to_ms = AU_to_m / 86400  # AU/Tag in m/s
-
 # Solar-System-Daten laden
 with open("solar_system.json", "r") as f:
     data = json.load(f)
-
-order = [
+labels = [
     "Sun",
     "Mercury",
     "Venus",
@@ -26,9 +24,8 @@ order = [
     "Neptune",
     "Pluto",
 ]
-
 rows = []
-for name in order:
+for name in labels:
     if name in data:
         body = data[name]
         mass = body["mass"]
@@ -36,11 +33,30 @@ for name in order:
         vel = body["velocity"]
         row = [mass, pos["x"], pos["y"], pos["z"], vel["vx"], vel["vy"], vel["vz"]]
         rows.append(row)
-
 # [mass, x, y, z, vx, vy, vz]
 bodies = np.array(rows, dtype=np.float64)
 bodies[:, 1:4] *= AU_to_m
 bodies[:, 4:7] *= AUday_to_ms
+
+# G = 1
+# v1 = 0.4127173212
+# v2 = 0.4811313628
+# bodies = np.array([[1, -1, 0, 0, v1, v2, 0], [1, 1, 0, 0, v1, v2, 0], [1, 0, 0, -2 * v1, -2 * v2, 0, 0]])
+# labels = ["Body 1", "Body 2", "Body 3"]
+
+# Globale Variablen für Simulation
+dt = 1e4  # Zeitschritt (in Sekunden)
+tolerance = 1e1  # Toleranz für die Simulation
+axis_limit = 1e12  # Achsenlimit für die Plots
+# dt = 1e-2  # Zeitschritt (in Sekunden)
+# tolerance = 1e-10  # Toleranz für die Simulation
+# axis_limit = 2  # Achsenlimit für die Plots
+sim_steps = 0  # Anzahl der bisher berechneten Schritte
+sim_time = {0: 0}  # Zeit in Sekunden
+paused = False  # Pause-Status
+display_index = 0  # Angezeigter History-Eintrag
+slider_active = False  # Slider-Aktivität
+max_trail_length = 1e4  # Maximale Länge der Trails
 
 # History zur Speicherung der Zustände (für Slider und Trails)
 history = [[bodies[i, 1:4].copy()] for i in range(bodies.shape[0])]
@@ -50,13 +66,13 @@ fig = plt.figure(figsize=(25, 25), dpi=100)
 ax = fig.add_subplot(111, projection="3d")
 plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.1)
 
-ax.set_xlim(-3e12, 3e12)
-ax.set_ylim(-3e12, 3e12)
-ax.set_zlim(-3e12, 3e12)
+ax.set_xlim(-axis_limit, axis_limit)
+ax.set_ylim(-axis_limit, axis_limit)
+ax.set_zlim(-axis_limit, axis_limit)
 ax.set_box_aspect((1, 1, 1))
 
 # Planeten (Punkte) und Trails (Linien) zeichnen
-planets = [ax.plot([], [], [], "o", color=f"C{i}", markersize=10, alpha=0.8, label=order[i])[0] for i in range(bodies.shape[0])]
+planets = [ax.plot([], [], [], "o", color=f"C{i}", markersize=10, alpha=0.8, label=labels[i])[0] for i in range(bodies.shape[0])]
 trails = [ax.plot([], [], [], "-", color=f"C{i}", alpha=0.3, linewidth=1)[0] for i in range(bodies.shape[0])]
 
 # Zeitanzeige (als Text im Plot)
@@ -131,20 +147,10 @@ def rkdp45(bodies, dt):
     error = np.linalg.norm(y5 - y4)
 
     print("dt:", dt, "error:", error)
-    if error > 1e-1:
-        dt = 0.99 * dt * (1e-1 / error) ** 0.01
+    if error > tolerance:
+        dt = 0.99 * dt * (tolerance / error) ** 0.01
         return rkdp45(bodies, dt)
     return y5, dt
-
-
-# Globale Variablen für Simulation
-dt = 1e4  # Zeitschritt (in Sekunden)
-sim_steps = 0  # Anzahl der bisher berechneten Schritte
-sim_time = {0: 0}  # Zeit in Sekunden
-paused = False  # Pause-Status
-display_index = 0  # Angezeigter History-Eintrag
-slider_active = False  # Slider-Aktivität
-max_trail_length = 1e4  # Maximale Länge der Trails
 
 
 # --- Callback-Funktionen für Buttons und Slider ---
