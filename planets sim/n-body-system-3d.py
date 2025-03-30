@@ -89,7 +89,16 @@ def acceleration(bodies):
     return acc
 
 
-@nb.njit()
+@nb.njit(fastmath=True, parallel=True)
+def euler(bodies, dt):
+    for i in range(bodies.shape[0]):
+        bodies[i, 1] += dt * bodies[i, 4]
+        bodies[i, 2] += dt * bodies[i, 5]
+        bodies[i, 3] += dt * bodies[i, 6]
+    return bodies, dt
+
+
+@nb.njit(fastmath=True, parallel=True)
 def rkdp45(bodies, dt):
     # c-Werte (Zeitanteile)
     c2, c3, c4, c5, c6, c7 = 1 / 5, 3 / 10, 4 / 5, 8 / 9, 1.0, 1.0
@@ -120,8 +129,8 @@ def rkdp45(bodies, dt):
     y5 = bodies + dt * (b1 * k1 + b2 * k2 + b3 * k3 + b4 * k4 + b5 * k5 + b6 * k6)
     y4 = bodies + dt * (b1s * k1 + b2s * k2 + b3s * k3 + b4s * k4 + b5s * k5 + b6s * k6 + b7s * k7)
     error = np.linalg.norm(y5 - y4)
-    # Ausgabe zur Kontrolle (kann kommentiert werden)
-    # print("dt:", dt, "error:", error)
+
+    print("dt:", dt, "error:", error)
     if error > 1e-1:
         dt = 0.99 * dt * (1e-1 / error) ** 0.01
         return rkdp45(bodies, dt)
@@ -218,5 +227,5 @@ def update(frame):
     return planets + trails + [time_text]
 
 
-ani = FuncAnimation(fig, update, interval=10, cache_frame_data=False)
+ani = FuncAnimation(fig, update, interval=0, cache_frame_data=False)
 plt.show()
