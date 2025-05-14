@@ -6,7 +6,7 @@ import numba as nb
 
 plt.rcParams["toolbar"] = "None"
 
-G = 6.6743 * 10-11  # Gravitational constant
+G = 1  # Gravitational constant
 
 v1 = 0.4127173212
 v2 = 0.4811313628

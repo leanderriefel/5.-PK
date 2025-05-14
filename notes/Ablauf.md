@@ -4,12 +4,7 @@
 #### Themen:
 - ##### Planetenbahnen
 - Tot der Sonne (nebensächlich)
-
-
-21. Februar, 13:45 Uhr
-
 #### Planetenbahnen
-
 Einführung in Chaos ("Schmetterlingseffekt"):
 - "Kann der Flügelschlag eines Schmetterlings in Brasilien einen Tornado in Texas auslösen?" ~ Edward N. Lorenz
 - Geschichte des Lorenz Systems
@@ -32,4 +27,6 @@ Einführung in Chaos ("Schmetterlingseffekt"):
 
 #### Informatik
 - Parallelität?
-- 
+
+
+Funfact: Neptun durch leichte Störungen in den Umlaufbahnen von Uranus gefunden.

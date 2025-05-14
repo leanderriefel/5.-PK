@@ -17,3 +17,15 @@ https://en.wikipedia.org/wiki/Periodic_function
 
 ##### White Papers
 https://arxiv.org/pdf/1705.00527 (Some examples of stable 3 Body Solutions)
+https://arxiv.org/abs/1209.5996 (Is the Solar System Stable?)
+https://arxiv.org/abs/0802.3371
+https://www.aanda.org/articles/aa/abs/2021/10/aa40989-21/aa40989-21.html?utm_source=chatgpt.com
+https://arxiv.org/pdf/2012.05177
+https://zenodo.org/records/4299102
+
+
+##### Others
+https://science.nasa.gov/solar-system/
+
+##### Models and Images
+"Orbiting Solar System" (https://skfb.ly/o6rP8) by AllThingsSpace is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).

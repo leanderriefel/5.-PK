@@ -3,15 +3,17 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button
 import numba as nb
-import keyboard
 import time
 import json
+import threading
+import queue
+from numba import prange
 
 G = 1  # Gravitational constant
 
 running = True
 
-"""-------------------------------------------------------------------------"""
+# -------------------------------------------------------------------------
 G = 6.6743e-11
 AU_to_m = 1.496e11  # Astronomical unit to meters
 AUday_to_ms = AU_to_m / 86400  # AU/day to m/s
@@ -47,121 +49,105 @@ bodies = np.array(rows, dtype=np.float64)
 
 bodies[:, 1:4] *= AU_to_m
 bodies[:, 4:7] *= AUday_to_ms
-"""-------------------------------------------------------------------------"""
-
-history = [[bodies[i, 1:4].copy()] for i in range(bodies.shape[0])]
-
-
-@nb.njit()
-def acceleration(bodies):
-    n = bodies.shape[0]
-    # Each body now has 7 components: mass, x, y, z, vx, vy, vz.
-    # The derivative array will also have 7 components.
-    acc = np.zeros((n, 7))
-    for i in range(n):
-        acc[i, 0] = 0.0  # mass derivative is zero
-        acc[i, 1] = bodies[i, 4]  # dx/dt = vx
-        acc[i, 2] = bodies[i, 5]  # dy/dt = vy
-        acc[i, 3] = bodies[i, 6]  # dz/dt = vz
-        for j in range(n):
-            if i == j:
-                continue
-            dx = bodies[j, 1] - bodies[i, 1]
-            dy = bodies[j, 2] - bodies[i, 2]
-            dz = bodies[j, 3] - bodies[i, 3]
-            dist = np.sqrt(dx * dx + dy * dy + dz * dz)
-            acc[i, 4] += G * bodies[j, 0] * dx / (dist**3)
-            acc[i, 5] += G * bodies[j, 0] * dy / (dist**3)
-            acc[i, 6] += G * bodies[j, 0] * dz / (dist**3)
-    return acc
+DT = 86400.0  # time step in seconds for Verlet
+# -------------------------------------------------------------------------
 
 
-@nb.njit()
-def rkdp45(bodies, dt=10000):
-    # c-values (time fractions)
-    c2, c3, c4, c5, c6, c7 = 1 / 5, 3 / 10, 4 / 5, 8 / 9, 1.0, 1.0
-
-    # Butcher tableau coefficients:
-    a21 = 1 / 5
-    a31, a32 = 3 / 40, 9 / 40
-    a41, a42, a43 = 44 / 45, -56 / 15, 32 / 9
-    a51, a52, a53, a54 = 19372 / 6561, -25360 / 2187, 64448 / 6561, -212 / 729
-    a61, a62, a63, a64, a65 = (
-        9017 / 3168,
-        -355 / 33,
-        46732 / 5247,
-        49 / 176,
-        -5103 / 18656,
-    )
-    a71, a72, a73, a74, a75, a76 = (
-        35 / 384,
-        0.0,
-        500 / 1113,
-        125 / 192,
-        -2187 / 6784,
-        11 / 84,
-    )
-
-    # Coefficients for 5th-order solution:
-    b1, b2, b3, b4, b5, b6 = 35 / 384, 0.0, 500 / 1113, 125 / 192, -2187 / 6784, 11 / 84
-    # b7 = 0.0 implicitly for the 5th order
-
-    # Coefficients for 4th-order embedded solution:
-    b1s, b2s, b3s, b4s, b5s, b6s, b7s = (
-        5179 / 57600,
-        0.0,
-        7571 / 16695,
-        393 / 640,
-        -92097 / 339200,
-        187 / 2100,
-        1 / 40,
-    )
-
-    k1 = acceleration(bodies)
-    k2 = acceleration(bodies + dt * (a21 * k1))
-    k3 = acceleration(bodies + dt * (a31 * k1 + a32 * k2))
-    k4 = acceleration(bodies + dt * (a41 * k1 + a42 * k2 + a43 * k3))
-    k5 = acceleration(bodies + dt * (a51 * k1 + a52 * k2 + a53 * k3 + a54 * k4))
-    k6 = acceleration(
-        bodies + dt * (a61 * k1 + a62 * k2 + a63 * k3 + a64 * k4 + a65 * k5)
-    )
-    k7 = acceleration(
-        bodies + dt * (a71 * k1 + a72 * k2 + a73 * k3 + a74 * k4 + a75 * k5 + a76 * k6)
-    )
-
-    y5 = bodies + dt * (b1 * k1 + b2 * k2 + b3 * k3 + b4 * k4 + b5 * k5 + b6 * k6)
-    y4 = bodies + dt * (
-        b1s * k1 + b2s * k2 + b3s * k3 + b4s * k4 + b5s * k5 + b6s * k6 + b7s * k7
-    )
-
-    error = np.linalg.norm(y5 - y4)
-    # print("dt:", dt, "error:", error)
-    if error > 1e-1:
-        dt = 0.99 * dt * (1e-1 / error) ** 0.01
-        return rkdp45(bodies, dt)
-    return y5, dt
-
-
-def calc():
-    global bodies
-    bodies, dt = rkdp45(bodies)
-    return bodies, dt
-
-
-with open(f"data-{time.time()}.jsonl", "a") as logfile:
-    print("Press 't' to toggle pause/resume. Press 'q' to quit.")
-    while True:
-        if keyboard.is_pressed("q"):
-            print("Quitting...")
+@nb.jit(fastmath=True, parallel=True)
+def solve_kepler(M, e, tol=1e-10, max_iter=5):
+    E = M if e < 0.8 else np.pi
+    for _ in range(max_iter):
+        dE = (E - e * np.sin(E) - M) / (1 - e * np.cos(E))
+        E -= dE
+        if abs(dE) < tol:
             break
-        if keyboard.is_pressed("t"):
-            running = not running
-            print("Paused" if not running else "Resumed")
-            time.sleep(0.3)
-        if running:
-            state, dt = calc()
-            log_entry = {
-                "dt": dt,
-                "state": [state[i, 1:4].tolist() for i in range(state.shape[0])],
-            }
-            logfile.write(json.dumps(log_entry) + "\n")
+    return E
+
+
+@nb.njit(fastmath=True, parallel=True)
+def verlet_batch(bodies, dt, nsteps):
+    n = bodies.shape[0]
+    for _ in range(nsteps):
+        # First kick
+        for i in prange(n):
+            ax = 0.0
+            ay = 0.0
+            az = 0.0
+            for j in range(n):
+                if i == j:
+                    continue
+                dx = bodies[j, 1] - bodies[i, 1]
+                dy = bodies[j, 2] - bodies[i, 2]
+                dz = bodies[j, 3] - bodies[i, 3]
+                dist = (dx * dx + dy * dy + dz * dz) ** 0.5
+                inv = G * bodies[j, 0] / (dist * dist * dist)
+                ax += dx * inv
+                ay += dy * inv
+                az += dz * inv
+            bodies[i, 4] += 0.5 * dt * ax
+            bodies[i, 5] += 0.5 * dt * ay
+            bodies[i, 6] += 0.5 * dt * az
+        # Drift
+        for i in prange(n):
+            bodies[i, 1] += dt * bodies[i, 4]
+            bodies[i, 2] += dt * bodies[i, 5]
+            bodies[i, 3] += dt * bodies[i, 6]
+        # Second kick
+        for i in prange(n):
+            ax = 0.0
+            ay = 0.0
+            az = 0.0
+            for j in range(n):
+                if i == j:
+                    continue
+                dx = bodies[j, 1] - bodies[i, 1]
+                dy = bodies[j, 2] - bodies[i, 2]
+                dz = bodies[j, 3] - bodies[i, 3]
+                dist = (dx * dx + dy * dy + dz * dz) ** 0.5
+                inv = G * bodies[j, 0] / (dist * dist * dist)
+                ax += dx * inv
+                ay += dy * inv
+                az += dz * inv
+            bodies[i, 4] += 0.5 * dt * ax
+            bodies[i, 5] += 0.5 * dt * ay
+            bodies[i, 6] += 0.5 * dt * az
+    return bodies
+
+
+STEP_INTERVAL = 100_000  # number of steps per log
+log_queue = queue.Queue()
+logfile_name = f"data-{time.time()}.jsonl"
+
+
+def log_writer():
+    with open(logfile_name, "a") as logfile:
+        while True:
+            entry = log_queue.get()
+            if entry is None:
+                break
+            logfile.write(json.dumps(entry) + "\n")
+            logfile.flush()
+
+
+log_thread = threading.Thread(target=log_writer, daemon=True)
+log_thread.start()
+
+print("Press CTRL+C to quit.")
+try:
+    steps = 0  # in millions
+    elapsed_time = 0.0  # in years
+    while True:
+        bodies = verlet_batch(bodies, DT, STEP_INTERVAL)
+        steps += STEP_INTERVAL / 1_000_000
+        elapsed_time += (DT * STEP_INTERVAL) / 31536000
+        log_entry = {
+            "step": steps,
+            "time": elapsed_time,
+            "state": bodies.tolist(),
+        }
+        log_queue.put(log_entry)
+        print(f"Step {round(steps, 2)} Million, Time {round(elapsed_time, 2)} Years")
+except KeyboardInterrupt:
+    print("Quitting...")
+    log_queue.put(None)
+    log_thread.join()

@@ -5,7 +5,7 @@ from astroquery.jplhorizons import Horizons
 from astropy.time import Time
 
 # Define a valid time span (start must be earlier than stop)
-epochs = {"start": "2000-01-01T12:00:00", "stop": "2000-01-01T12:01:00", "step": "1m"}
+epochs = {"start": "2025-04-01T12:00:00", "stop": "2025-04-01T12:01:00", "step": "1m"}
 
 # Dictionary of major body Horizons IDs
 body_ids = {
@@ -19,6 +19,7 @@ body_ids = {
     "Uranus": "799",
     "Neptune": "899",
     "Pluto": "999",
+    "36 Atalante": "36",
 }
 
 # Fallback GM values (in km^3/s^2) for bodies that might not return GM

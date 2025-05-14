@@ -5,11 +5,10 @@ from matplotlib.widgets import Button, Slider
 import numba as nb
 import json
 
-# Konstanten und Umrechnungen
-G = 6.6743e-11
+G = 6.6743e-11  # Gravitationskonstante in m^3 kg^-1 s^-2
 AU_to_m = 1.496e11  # Astronomische Einheit in Meter
 AUday_to_ms = AU_to_m / 86400  # AU/Tag in m/s
-# Solar-System-Daten laden
+
 with open("solar_system.json", "r") as f:
     data = json.load(f)
 labels = [
@@ -23,6 +22,7 @@ labels = [
     "Uranus",
     "Neptune",
     "Pluto",
+    "36 Atalante",
 ]
 rows = []
 for name in labels:
@@ -38,19 +38,23 @@ bodies = np.array(rows, dtype=np.float64)
 bodies[:, 1:4] *= AU_to_m
 bodies[:, 4:7] *= AUday_to_ms
 
+dt = 86400 # Zeitschritt (in Sekunden)
+tolerance = 1e1  # Toleranz für die Simulation
+axis_limit = 1e12  # Achsenlimit für die Plots
+
+# ---------------------------------------------------------------------------------------------------------------------------
 # G = 1
 # v1 = 0.4127173212
 # v2 = 0.4811313628
 # bodies = np.array([[1, -1, 0, 0, v1, v2, 0], [1, 1, 0, 0, v1, v2, 0], [1, 0, 0, -2 * v1, -2 * v2, 0, 0]])
 # labels = ["Body 1", "Body 2", "Body 3"]
 
-# Globale Variablen für Simulation
-dt = 1e4  # Zeitschritt (in Sekunden)
-tolerance = 1e1  # Toleranz für die Simulation
-axis_limit = 1e12  # Achsenlimit für die Plots
 # dt = 1e-2  # Zeitschritt (in Sekunden)
 # tolerance = 1e-10  # Toleranz für die Simulation
 # axis_limit = 2  # Achsenlimit für die Plots
+# ---------------------------------------------------------------------------------------------------------------------------
+
+# Globale Variablen für Simulation
 sim_steps = 0  # Anzahl der bisher berechneten Schritte
 sim_time = {0: 0}  # Zeit in Sekunden
 paused = False  # Pause-Status
@@ -83,15 +87,13 @@ ax.legend(loc="upper right")
 
 
 # --- Simulationsfunktionen ---
-@nb.njit()
+@nb.njit(fastmath=True, parallel=True)
 def acceleration(bodies):
     n = bodies.shape[0]
     acc = np.zeros((n, 7))
     for i in range(n):
         acc[i, 0] = 0.0  # Massen-Ableitung = 0
-        acc[i, 1] = bodies[i, 4]  # dx/dt = vx
-        acc[i, 2] = bodies[i, 5]  # dy/dt = vy
-        acc[i, 3] = bodies[i, 6]  # dz/dt = vz
+        acc[i, 1:4] = bodies[i, 4:7]  # dx/dt = vx, dy/dt = vy, dz/dt = vz
         for j in range(n):
             if i == j:
                 continue
@@ -107,10 +109,22 @@ def acceleration(bodies):
 
 @nb.njit(fastmath=True, parallel=True)
 def euler(bodies, dt):
-    for i in range(bodies.shape[0]):
-        bodies[i, 1] += dt * bodies[i, 4]
-        bodies[i, 2] += dt * bodies[i, 5]
-        bodies[i, 3] += dt * bodies[i, 6]
+    acc = acceleration(bodies)
+    bodies[:, 1:4] += dt * bodies[:, 4:7]
+    bodies[:, 4:7] += dt * acc[:, 4:7]
+    return bodies, dt
+
+
+@nb.njit(fastmath=True, parallel=True)
+def rk4(bodies, dt):
+    k1 = acceleration(bodies)
+    k2 = acceleration(bodies + dt * 0.5 * k1)
+    k3 = acceleration(bodies + dt * 0.5 * k2)
+    k4 = acceleration(bodies + dt * k3)
+
+    bodies[:, 1:4] += dt * (bodies[:, 4:7] + dt * (k1[:, 4:7] + 2 * k2[:, 4:7] + 2 * k3[:, 4:7] + k4[:, 4:7]) / 6)
+    bodies[:, 4:7] += dt * (k1[:, 4:7] + 2 * k2[:, 4:7] + 2 * k3[:, 4:7] + k4[:, 4:7]) / 6
+
     return bodies, dt
 
 
@@ -153,6 +167,39 @@ def rkdp45(bodies, dt):
     return y5, dt
 
 
+@nb.njit(fastmath=True, parallel=True)
+def verlet(bodies, dt):
+    for i in range(bodies.shape[0]):
+        # Calculate acceleration for current position
+        ai = np.zeros(3)
+        for j in range(bodies.shape[0]):
+            if i == j:
+                continue
+            r = bodies[j, 1:4] - bodies[i, 1:4]
+            dist = np.sqrt(np.sum(r * r) + 1e-12)
+            ai += G * bodies[j, 0] * r / (dist * dist * dist)
+
+        # First kick
+        bodies[i, 4:7] += 0.5 * dt * ai
+
+        # Drift
+        bodies[i, 1:4] += dt * bodies[i, 4:7]
+
+        # Recalculate acceleration for new position
+        ai2 = np.zeros(3)
+        for j in range(bodies.shape[0]):
+            if i == j:
+                continue
+            r = bodies[j, 1:4] - bodies[i, 1:4]
+            dist = np.sqrt(np.sum(r * r) + 1e-12)
+            ai2 += G * bodies[j, 0] * r / (dist * dist * dist)
+
+        # Second kick
+        bodies[i, 4:7] += 0.5 * dt * ai2
+
+    return bodies, dt
+
+
 # --- Callback-Funktionen für Buttons und Slider ---
 def pause_start(event):
     global paused
@@ -176,14 +223,16 @@ def slider_update(val):
 
 
 def update_display(steps):
-    steps = min(steps, sim_steps)
+    steps = min(int(steps), sim_steps)
+
     for i in range(bodies.shape[0]):
         pos = history[i][steps]
         planets[i].set_data([pos[0]], [pos[1]])
         planets[i].set_3d_properties([pos[2]])
 
-        start_idx = max(0, steps - max_trail_length)
+        start_idx = max(0, steps - int(max_trail_length))
         trail_data = history[i][start_idx : steps + 1]
+
         if len(trail_data) > 0:
             trail_x = [p[0] for p in trail_data]
             trail_y = [p[1] for p in trail_data]
