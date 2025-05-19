@@ -33,7 +33,7 @@ G_new = np.float32(G_new)
 with open("solar_system.json", "r") as f:
     data = json.load(f)
 
-labels = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "36 Atalante"]
+labels = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
 rows = []
 for name in labels:
     if name in data:

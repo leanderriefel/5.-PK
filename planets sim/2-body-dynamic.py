@@ -38,19 +38,15 @@ ax.set_ylim(-20, 20)
 ax.grid(color="black", linewidth=0.2, alpha=0.4)
 ax.set_box_aspect(1)
 
-planet1 = ax.plot(
-    [], [], "o", color="#00aaaa", markersize=10, label="Planet 1", alpha=0.8
-)[0]
-planet2 = ax.plot(
-    [], [], "o", color="#aa00aa", markersize=10, label="Planet 2", alpha=0.8
-)[0]
+planet1 = ax.plot([], [], "o", color="#00aaaa", markersize=10, label="Planet 1", alpha=0.8)[0]
+planet2 = ax.plot([], [], "o", color="#aa00aa", markersize=10, label="Planet 2", alpha=0.8)[0]
 
 trail1 = ax.plot([], [], "-", color="#00aaaa", alpha=0.3, linewidth=2)[0]
 trail2 = ax.plot([], [], "-", color="#aa00aa", alpha=0.3, linewidth=2)[0]
 
 # Add analytical (Keplerian) orbit for comparison
-analytical_trail, = ax.plot([], [], '-', color="#ffaa00", alpha=0.1, linewidth=10, label="Keplerian Orbit")
-analytical_planet = ax.plot([], [], 'o', color="#ffaa00", markersize=25, alpha=0.5, label="Keplerian Position")[0]
+(analytical_trail,) = ax.plot([], [], "-", color="#ffaa00", alpha=0.1, linewidth=10, label="Keplerian Orbit")
+analytical_planet = ax.plot([], [], "o", color="#ffaa00", markersize=25, alpha=0.5, label="Keplerian Position")[0]
 
 # Precompute Keplerian ellipse parameters
 mu = G * (m1 + m2)
@@ -59,15 +55,17 @@ r_p = initial_distance  # periapsis distance
 a = r_p / (1 - ecc)  # semi-major axis
 T = 2 * np.pi * np.sqrt(a**3 / mu)  # orbital period
 
+
 # Equation: M = E + e * sin(E) with derivative: dM/dE = 1 - e * cos(E)
 def solve_kepler(M, e, tol=1e-10, max_iter=5):
-    E = M if e < 0.8 else np.pi # starting guess
+    E = M if e < 0.8 else np.pi  # starting guess
     for _ in range(max_iter):
         dE = (E - e * np.sin(E) - M) / (1 - e * np.cos(E))
         E -= dE
         if abs(dE) < tol:
             break
     return E
+
 
 def kepler_position(t):
     # Mean anomaly starting from periapsis
@@ -82,7 +80,9 @@ def kepler_position(t):
     y = r * np.sin(theta)
     return x, y
 
+
 analytical_history = []
+
 
 def acceleration(state):
     # Unpack state for both planets

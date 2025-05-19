@@ -19,7 +19,6 @@ body_ids = {
     "Uranus": "799",
     "Neptune": "899",
     "Pluto": "999",
-    "36 Atalante": "36",
 }
 
 # Fallback GM values (in km^3/s^2) for bodies that might not return GM

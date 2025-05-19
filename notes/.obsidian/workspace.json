@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Laplascher Dämon.md",
+                "file": "Quellen.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Laplascher Dämon"
+              "title": "Quellen"
             }
           }
         ]
@@ -165,8 +165,8 @@
   },
   "active": "ab8eded82fba01bc",
   "lastOpenFiles": [
-    "Laplacescher Dämon.md",
     "Laplascher Dämon.md",
+    "Laplacescher Dämon.md",
     "Lorenz System.md",
     "Lorenz v2.mp4",
     "Quellen.md",
