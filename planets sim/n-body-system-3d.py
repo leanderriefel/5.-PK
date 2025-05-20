@@ -37,7 +37,7 @@ bodies = np.array(rows, dtype=np.float64)
 bodies[:, 1:4] *= AU_to_m
 bodies[:, 4:7] *= AUday_to_ms
 
-dt = 86400 / 100  # Zeitschritt (in Sekunden) - 1/100 Tag
+dt = 86400  # Zeitschritt (in Sekunden) - 1 Tag
 tolerance = 1e1  # Toleranz für die Simulation
 axis_limit = 1e12  # Achsenlimit für die Plots
 
